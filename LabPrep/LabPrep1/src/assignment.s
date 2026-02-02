@@ -67,6 +67,24 @@ copyvec:
     # If you are having trouble, use the debugger and memory view (as in the
     # first assignment) to see what is getting copied. 
     ###########################################################################
+    mv t0, a0 # adress to arr src[0]
+    mv t1, a1 # adress to arr dst[0]
+    mv t2, a2 # number of elements
+
+    # If size == 0 return immediately
+    beq t2, zero, copyvec_end
+
+    li t3, 0  # i
+
+copyvec_loop:
+    lw t4, 0(t0)        # load int from src
+    sh t4, 0(t1)        # store low 16 bits into dst (signed short)
+    addi t0, t0, 4      # advance src pointer by 4 bytes
+    addi t1, t1, 2      # advance dst pointer by 2 bytes (short)
+    addi t3, t3, 1
+    blt t3, t2, copyvec_loop
+
+copyvec_end:
     ret
 
 ###############################################################################
@@ -113,7 +131,50 @@ copyelements:
     #
     # Remember to restore any values you pushed to the stack.
     ###########################################################################
-    ret
+        # Save input bases and indices in temporaries
+        mv t0, a0      # original src base
+        mv t1, a1      # original dst base
+        mv t2, a2      # start index
+        mv t3, a3      # end index
+
+        # If end < start -> size = 0, return 0
+        blt t3, t2, ce_no_copy
+
+        # size = end - start + 1
+        sub t4, t3, t2
+        addi t4, t4, 1
+
+        # src_start = src_base + start * 4
+        slli t5, t2, 2
+        add t5, t5, t0
+
+        # dst_start = dst_base + start * 2
+        slli t6, t2, 1
+        add t6, t6, t1
+
+        # Save caller-saved registers that we need after the call
+        addi sp, sp, -16
+        sw ra, 12(sp)
+        sw t4, 8(sp)
+
+        # Call copyvec(src_start, dst_start, size)
+        mv a0, t5
+        mv a1, t6
+        mv a2, t4
+        call copyvec
+
+        # Restore saved registers
+        lw t4, 8(sp)
+        lw ra, 12(sp)
+        addi sp, sp, 16
+
+        # Return number of elements copied in a0
+        mv a0, t4
+        ret
+
+    ce_no_copy:
+        li a0, 0
+        ret
 
 ###############################################################################
 # Assignment 6:
