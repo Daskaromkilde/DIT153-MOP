@@ -80,7 +80,7 @@ copyvec_loop:
     lw t4, 0(t0)        # load int from src
     sh t4, 0(t1)        # store low 16 bits into dst (signed short)
     addi t0, t0, 4      # advance src pointer by 4 bytes
-    addi t1, t1, 2      # advance dst pointer by 2 bytes (short)
+    addi t1, t1, 2      # advance dst pointer by 2 bytes (short) 
     addi t3, t3, 1
     blt t3, t2, copyvec_loop
 
